@@ -1,0 +1,76 @@
+#:kivy 1.9.0
+
+<GameWidget>:
+    canvas:
+        Rectangle:
+            source: "Images/background.png"
+            size: self.size
+            pos: self.pos
+
+    rocket: game_rocket
+    Label:
+        font_size: 20  
+        center_x: root.width - 50
+        top: root.top + 40
+        text: "Czas: " + str(round(root.timer))
+
+    Label:
+        font_size: 20  
+        center_x: 50
+        top: root.top + 40
+        text: "Punkty: " + str(root.score)
+
+    Rocket:
+        id: game_rocket
+        center: self.parent.center
+
+<Rocket>:
+    size: 43, 93
+    canvas:
+        #Rotate:
+        #    angle: 45
+        #    axis: 0, 0, 1
+        Rectangle:
+            source: "Images/Rocket.gif"
+            pos: self.pos
+            size: 43, 93
+
+<Asteroid1>:
+    size: 40, 42
+    canvas:
+        Color:
+            rgb: (0.6, 0.6, 0.6)
+        Rectangle:
+            source: "Images/Asteroid1.gif"
+            pos: self.pos
+            size: 40, 42
+
+<Asteroid2>:
+    size: 48, 42
+    canvas:
+        Color:
+            rgb: (0.5, 0.5, 0.5)
+        Rectangle:
+            source: "Images/Asteroid2.gif"
+            pos: self.pos
+            size: 48, 42
+
+<Asteroid3>:
+    size: 46, 52
+    canvas:
+        Color:
+            rgb: (0.4, 0.4, 0.4)
+        Rectangle:
+            source: "Images/Asteroid3.gif"
+            pos: self.pos
+            size: 46, 52
+
+<Resource>:
+    size: 20, 20
+    canvas:
+        Color:
+            rgb: (1, 1, 1)
+        Rectangle:
+            source: "Images/Resource.gif"
+            pos: self.pos
+            size: 20, 20
