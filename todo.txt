@@ -1,0 +1,6 @@
+cut corners?
+explosion
+splash screen
+end screen
+pause and quit
+rotate the rocket?
