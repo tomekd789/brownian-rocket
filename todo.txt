@@ -4,3 +4,4 @@ splash screen
 end screen
 pause and quit
 rotate the rocket?
+avoid showing counters /behind/ asteroids
