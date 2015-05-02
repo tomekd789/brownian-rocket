@@ -2,6 +2,8 @@ cut corners?
 explosion
 splash screen
 end screen
-pause and quit
+'pause' and 'quit'
 rotate the rocket?
 avoid showing counters /behind/ asteroids
+consider creating separate lists for
+    asteroids and resources; has got pros & cons

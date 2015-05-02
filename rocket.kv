@@ -1,17 +1,21 @@
 #:kivy 1.9.0
+# Textures have been created by Maciej Dryjanski
 
 <GameWidget>:
+    # Black background with stars
     canvas:
         Rectangle:
             source: "Images/background.png"
             size: self.size
             pos: self.pos
 
+    # The rocket itself
     rocket: game_rocket
     Rocket:
         id: game_rocket
         center: self.parent.center
 
+    # Countdown display
     Label:
         color: (1, 1, 1, 1)
         font_size: 20
@@ -19,6 +23,7 @@
         top: root.top + 40
         text: "Czas: " + str(round(root.timer))
 
+    # Score display
     Label:
         color: (1, 1, 1, 1)
         font_size: 20
@@ -29,6 +34,10 @@
 <Rocket>:
     size: 43, 93
     canvas:
+        # Initially I wanted to rotate the rocket
+        # with the vector speed changes; however
+        # Kivy behaviour is strange
+
         #Rotate:
         #    angle: 45
         #    axis: 0, 0, 1
@@ -41,6 +50,8 @@
     size: 40, 42
     canvas:
         Color:
+            # Shades of grey by asteroid type,
+            # to make their appearance pseudo-3D
             rgb: (0.6, 0.6, 0.6)
         Rectangle:
             source: "Images/Asteroid1.gif"

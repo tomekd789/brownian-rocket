@@ -5,13 +5,13 @@ from os import system as _system
 from time import sleep as _sleep
 
 from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.graphics import Color
-from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
-from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.config import Config
+from kivy.graphics import Color
+from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.uix.image import Image
+from kivy.uix.widget import Widget
+from kivy.vector import Vector
 
 # Constants
 RESOURCE_COUNT = 15 # No. of resources in the game
@@ -35,17 +35,8 @@ def joystick_summary_status():
         return [_randint(-10, 10), _randint(-10, 10)]
 
 ### PRIVATE SECTION
-# Imports
 
-# Set the window size
-Config.set('graphics', 'width', str(XSIZE))
-Config.set('graphics', 'height', str(YSIZE))
-
-# Global data structures
-resources = [] # List of resources_count resources coordinates
-asteroids = [] # List of asteroids_count asteroids
-
-# Generic widget class for objects moving freely
+# Generic widget class for freely moving objects
 class SelfMovingItem(Widget):
     pos_x = NumericProperty(0.0)
     pos_y = NumericProperty(0.0)
@@ -63,18 +54,20 @@ class Resource(SelfMovingItem):
     pass
 
 class Rocket(Widget):
-    # Velocity of the rocket on axis
+    # Velocity of the rocket along a given axis
     vel_x = NumericProperty(0.0)
     vel_y = NumericProperty(0.0)
-    #angle = NumericProperty(0.0)
     # ReferenceList to use rocket.vel as a shorthand
     vel = ReferenceListProperty(vel_x, vel_y)
 
     # Move the rocket one step. Called in equal intervals to animate the rocket
     def move(self):
+        # Get velocity from joysticks; if not connected, take a random value
         self.vel = joystick_summary_status()
+        # Normalize the speed with the defined maximum
         self.vel_x = self.vel_x * MAX_ROCKET_SPEED
         self.vel_y = self.vel_y * MAX_ROCKET_SPEED
+        # Change rocket position
         self.pos = Vector(*self.vel) + self.pos
 
 class GameWidget(Widget):
@@ -83,19 +76,21 @@ class GameWidget(Widget):
     timer = NumericProperty(GAME_TIME)
 
     def collision(self):
-        # Called if the rocket collided with an obstacle
+        # Called if the rocket collides with an obstacle
         # i.e. the window frame, or an asteroid
-        #self.score = 0 # Reset score; "mission restarted"
-        # TBD: animate an explosion
+        
+        # Penalty by decreasing available time;
+        # Maybe I'll put an explosion animation here
         _sleep(2)
+        
+        # Rocket is then moved to a collision-safe place
         rocket_is_safe = False
         while not rocket_is_safe:
-            # Select a new, random position
+            # Select a new random position
             xpos = _randint(100, XSIZE - 100)
             ypos = _randint(100, YSIZE - 100)
-            # ...until not colliding with any asteroid
             self.rocket.center = (xpos, ypos)
-            flag = 1
+            # ...until not colliding with any asteroid
             for i in range(ASTEROID_COUNT):
                 if self.rocket.collide_widget(self.children[i]):
                     break
@@ -104,12 +99,14 @@ class GameWidget(Widget):
 
     def update(self, dt):
         # One step game status update
+        
         # Move the rocket by the speed vector
         self.rocket.move()
+        
         # Decrease the timer; it will display automatically
         self.timer = self.timer - dt
 
-        # Move the asteroids & resources
+        # Move the freely floating objects, i.e. asteroids & resources
         # It's aplicable to all these objects with the same algorithm
         # Then there is no separate 'move' function for each class
         for i in range(ASTEROID_COUNT + RESOURCE_COUNT):
@@ -126,6 +123,7 @@ class GameWidget(Widget):
                 new_y = -MARGIN
             self.children[i].pos_x = new_x
             self.children[i].pos_y = new_y
+            # Using float due to sub-unit steps; then rounding is needed
             self.children[i].pos = (round(new_x), round(new_y))
 
         # Check for a rocket collision with the window frame
@@ -143,7 +141,11 @@ class GameWidget(Widget):
         # Check for a rocket meeting with a resource
         for i in range(ASTEROID_COUNT, ASTEROID_COUNT + RESOURCE_COUNT):
             if self.rocket.collide_widget(self.children[i]):
+                # Score increases by 1
                 self.score = self.score + 1
+                # The resource disappears; actually it gets new coordinates,
+                # So it immediately translates far away. Then there's no need
+                # to destroy and recreate the object.
                 xpos = _randint(0, XSIZE)
                 ypos = -MARGIN # To avoid resources popping out within the window
                 self.children[i].pos = (xpos, ypos)
@@ -152,46 +154,50 @@ class GameWidget(Widget):
 
 class RocketApp(App):
     def build(self):
+        # Building the main window widget
         game = GameWidget()
         # c1, c2, c3 to split the ASTEROID_COUNT into three
         c1 = ASTEROID_COUNT // 3
         c2 = c1 * 2
-        # Adding asteroids
+        # Adding asteroids; three various classes to have three different images
         for i in range(c1):
             game.add_widget(Asteroid1(), i)
         for i in range(c1, c2):
             game.add_widget(Asteroid2(), i)
         for i in range(c2, ASTEROID_COUNT):
             game.add_widget(Asteroid3(), i)
-        # Generate random positions for all asteroids (type 1, 2, 3)
+        # Generate random positions for all asteroids (type 1, 2, and 3)
         for i in range(ASTEROID_COUNT):
             while True:
                 xpos = _randint(0, XSIZE)
                 ypos = _randint(0, YSIZE)
-                # ...until being reasonably far from the center
+                # ...until being reasonably far from the center,
+                # to avoid an immediate collsion with the rocket
                 if abs(xpos - XSIZE//2) > 50:
                     if abs(ypos - YSIZE//2) > 50:
                         break
             # Set the asteroid actual location
             game.children[i].pos = (xpos, ypos)
-            # Set the asteroid location attributes
+            # Set the asteroid location attributes;
+            # These are separate to accumulate computed movement
             game.children[i].pos_x = xpos
             game.children[i].pos_y = ypos
             # Set the asteroid velocity attributes
             game.children[i].vel_x = MAX_ASTEROID_SPEED / (_randint(-3, 3) + 0.5)
             game.children[i].vel_y = MAX_ASTEROID_SPEED / (_randint(-3, 3) + 0.5)
             
+        # Adding resources as next items on the widget list
         for i in range(ASTEROID_COUNT, ASTEROID_COUNT + RESOURCE_COUNT):
             # Resource index starts after the ASTEROID_COUNT
             game.add_widget(Resource(), i) # Adding i-th resource
             xpos = _randint(0, XSIZE)
             ypos = _randint(0, YSIZE)
-            # Set the resource location; it's going to be permanent
+            # Set the resource location
             game.children[i].pos = (xpos, ypos)
-            # Set the resource location, the real numbers
+            # Set the resource location attributes, float
             game.children[i].pos_x = xpos
             game.children[i].pos_y = ypos
-            # Set the resource velocity; real numbers
+            # Set the resource velocity; float
             game.children[i].vel_x = MAX_RESOURCE_SPEED / (_randint(-3, 3) + 0.5)
             game.children[i].vel_y = MAX_RESOURCE_SPEED / (_randint(-3, 3) + 0.5)
 
@@ -199,10 +205,12 @@ class RocketApp(App):
         return game
 
 if __name__ == '__main__':
-    _seed() # Initialize the random generator
-    while True: # Infinite loop
-        resources = [] # Clear the resources list
-        asteroids = [] # Clear the asteroids list
-        score = 0
-        RocketApp().run() # Launch the main application
-        exit()
+    # Initialize the random generator
+    _seed()
+    
+    # Set the window size; the way is ugly, but this is the best advice I've found
+    Config.set('graphics', 'width', str(XSIZE))
+    Config.set('graphics', 'height', str(YSIZE))
+
+    # Launch the application
+    RocketApp().run()
